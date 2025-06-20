@@ -6,7 +6,10 @@
 
 ## 🚀 简介
 
-![Start](images/start.png)
+
+<p align="center">
+  <img src="images/start.png" width="50%"/>
+</p>
 
 **Monkey ACL (吗喽ACL)** 是一款基于 HTTP API 的防火墙动态授权管理工具，帮助你安全、高效、智能地管理服务器远程访问权限。
 
@@ -120,38 +123,50 @@ curl "http://<server-ip>:<api-port>/scorcsoft/monkeyACL?port=<需要放通的端
 
 创建以下快捷指令：
 
-![创建快捷指令](/images/iPhone-1.png)
+<p align="center">
+  <img src="images/iPhone-1.png" width="30%"/>
+</p>
 
 ### 2️⃣ 配置快捷指令自动运行
 
 **切换到”自动化“界面**
 
-![自动化界面](/images/iPhone-3.jpg)
+<p align="center">
+  <img src="images/iPhone-3.jpg" width="30%"/>
+</p>
 
 **创建自动化**
 
 单击右上角 + 号，创建一个自动化条件：
 
-![创建自动化条件](/images/iPhone-4.png)
+<p align="center">
+  <img src="images/iPhone-4.png" width="30%"/>
+</p>
 
 **选择 APP**
 
 选择需要服务器访问权限的APP，例如：你的远程桌面客户端或 SSH 客户端
 
-![创建自动化条件](/images/iPhone-5.jpg)
+<p align="center">
+  <img src="images/iPhone-5.jpg" width="30%"/>
+</p>
 
 **修改运行配置**
 
 将该自动化配置为”立即运行“
 
-![创建自动化条件](/images/iPhone-7.jpg)
+<p align="center">
+  <img src="images/iPhone-7.jpg" width="30%"/>
+</p>
 
 
 ### 3️⃣ 完成
 
 打开该 App，iPhone 的快捷指令会在 App 打开时执行设定的快捷执行，访问 Monkey ACL 的 API 将你手机当前的 IP 地址添加到防火墙规则。
 
-![完成](/images/iPhone-8.png)
+<p align="center">
+  <img src="images/iPhone-8.png" width="30%"/>
+</p>
 
 
 ## 📱 Android 联动
