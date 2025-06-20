@@ -119,13 +119,14 @@ curl "http://<server-ip>:<api-port>/scorcsoft/monkeyACL?port=<需要放通的端
 打开 iPhone 的快捷指令 app，点击右上角 + 号新建一个快捷指令：
 
 创建以下快捷指令：
+
 ![创建快捷指令](/images/iPhone-1.png)
 
 ### 2️⃣ 配置快捷指令自动运行
 
 **切换到”自动化“界面**
 
-![自动化界面](/images/iPhone-3.png)
+![自动化界面](/images/iPhone-3.jpg)
 
 **创建自动化**
 
@@ -137,13 +138,13 @@ curl "http://<server-ip>:<api-port>/scorcsoft/monkeyACL?port=<需要放通的端
 
 选择需要服务器访问权限的APP，例如：你的远程桌面客户端或 SSH 客户端
 
-![创建自动化条件](/images/iPhone-5.png)
+![创建自动化条件](/images/iPhone-5.jpg)
 
 **修改运行配置**
 
 将该自动化配置为”立即运行“
 
-![创建自动化条件](/images/iPhone-7.png)
+![创建自动化条件](/images/iPhone-7.jpg)
 
 
 ### 3️⃣ 完成
