@@ -4,12 +4,11 @@ import sys
 import time
 import json
 import string
-import random
 import traceback
 import threading
 import subprocess
+from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import parse_qs
 
 
 OPTIONS = {
@@ -24,8 +23,8 @@ class MonkeyACLServer(HTTPServer):
 
 
 class MonkeyACLHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        if self.path != '/scorcsoft/monkeyACL':
+    def do_GET(self):
+        if not self.path.startswith('/scorcsoft/monkeyACL'):
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Illegal URI address： [{self.path}] ")
             self.send_response(200)
             self.send_header('Content-type', 'text/plain; charset=utf-8')
@@ -33,10 +32,8 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'')
             return
 
-        content_length = int(self.headers.get('Content-Length', 0))
-        post_data = self.rfile.read(content_length).decode('utf-8')
-
-        params = parse_qs(post_data)
+        parsed_url = urlparse(self.path)
+        params = parse_qs(parsed_url.query)
         auth = params.get('auth', [None])[0]
         if auth != OPTIONS['auth']:
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Illegal user auth: [{auth}], set auth: [{OPTIONS['auth']}]")
@@ -118,8 +115,7 @@ class Tool:
             len(pwd) > 15 and
             any(c.islower() for c in pwd) and
             any(c.isupper() for c in pwd) and
-            any(c.isdigit() for c in pwd) and
-            any(c in string.punctuation for c in pwd)
+            any(c.isdigit() for c in pwd)
         )
         return ok
 
@@ -296,7 +292,7 @@ def help_message():
     print("    --port=PORT: \t API HTTP port")
     print("\n")
     print("Notes:")
-    print("    For your server security, The length of the --auth parameter must be greater than 16, and it must contain uppercase letters, lowercase letters, numbers, and symbols")
+    print("    For your server security, The length of the --auth parameter must be greater than 16, and it must contain uppercase letters, lowercase letters, numbers")
     print("\n")
     print("Example:")
     print('    python3 monkeyACL.py --auth="1*r^(5_N1rrbKo6e" --port=8080')
@@ -349,7 +345,7 @@ def main():
 
     if not tool.check_password(auth):
         print(f"[!] {auth} is not a valid auth key")
-        print('[!] For your server security, The length of the --auth parameter must be greater than 16, and it must contain uppercase letters, lowercase letters, numbers, and symbols')
+        print('[!] For your server security, The length of the --auth parameter must be greater than 16, and it must contain uppercase letters, lowercase letters and numbers')
         print('[i] Example: python3 monkeyACL.py --auth="fr#yrQ(7rsM8v)ra"')
         print("more information: https://github.com/Scorcsoft/monkeyACL")
         return
