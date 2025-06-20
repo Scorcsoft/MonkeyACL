@@ -8,7 +8,7 @@
 
 
 <p align="center">
-  <img src="images/start.png" width="50%"/>
+  <img src="images/start.png" width="100%"/>
 </p>
 
 **Monkey ACL (吗喽ACL)** 是一款基于 HTTP API 的防火墙动态授权管理工具，帮助你安全、高效、智能地管理服务器远程访问权限。
