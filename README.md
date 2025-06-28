@@ -98,9 +98,9 @@ Github: https://github.com/Scorcsoft/monkeyACL
 
 ## 🔑 获取临时访问授权
 
-使用你用来连接服务器的设备访问以下URL：
+假设你要放行你当前的 IP 访问 服务器的 8080 端口，这样调用 API：
 ```bash
-curl -X POST -k -d '{"auth": "<your_auth>","port": 8080, "protocol": "tcp"}' "https://chengdu.proxy.scorcsoft.com:4400/<your_api_url>"
+curl -X POST -k -d '{"auth": "<your_auth>","port": 8080, "protocol": "tcp"}' "https://your_server_ip:<your_port>/<your_api_url>"
 ```
 
 成功响应：
