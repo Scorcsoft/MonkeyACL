@@ -1,9 +1,9 @@
 import os
 import re
 import sys
+import ssl
 import time
 import json
-import string
 import traceback
 import threading
 import subprocess
@@ -23,8 +23,8 @@ class MonkeyACLServer(HTTPServer):
 
 
 class MonkeyACLHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if not self.path.startswith('/scorcsoft/monkeyACL'):
+    def do_POST(self):
+        if not self.path.startswith(f"/{OPTIONS['url']}"):
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Illegal URI address： [{self.path}] ")
             self.send_response(200)
             self.send_header('Content-type', 'text/plain; charset=utf-8')
@@ -32,9 +32,13 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'')
             return
 
-        parsed_url = urlparse(self.path)
-        params = parse_qs(parsed_url.query)
-        auth = params.get('auth', [None])[0]
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length)
+        json_data = json.loads(post_data)
+        if 'auth' not in json_data.keys():
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Illegal user auth: [{None}], set auth: [{OPTIONS['auth']}]")
+            return b''
+        auth = json_data['auth']
         if auth != OPTIONS['auth']:
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Illegal user auth: [{auth}], set auth: [{OPTIONS['auth']}]")
             self.send_response(200)
@@ -42,7 +46,11 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'auth failed')
             return
-        p = params.get('port', [None])[0]
+
+        if 'port' not in json_data.keys():
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Invalid parameter of port")
+            return b''
+        p = json_data['port']
         try:
             port = int(p)
         except:
@@ -60,7 +68,11 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(message).encode('utf-8'))
             return
 
-        p = params.get('protocol', [None])[0]
+        if 'protocol' not in json_data.keys():
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Invalid parameter of protocol")
+            return b''
+
+        p = json_data['protocol']
         protocol = p.lower()
         if protocol != "tcp" and protocol != "udp":
             self.send_response(200)
@@ -189,7 +201,7 @@ class Centos:
             subprocess.check_call(cmd)
 
             subprocess.check_call(['firewall-cmd', '--reload'])
-            return {'success': True, 'message': f"Create firewalld rule success"}
+            return {'success': True, 'message': f"Create firewalld rule success: {ip} --[{protocol}]--> {port}"}
         except:
             return {'success': False, 'exception': True,
                     'message': f"Create firewalld rule failed：{traceback.format_exc()}"}
@@ -284,18 +296,23 @@ def help_message():
     print('Github: https://github.com/Scorcsoft/monkeyACL')
     print("")
     print("Options:")
-    print("    -h,--help: \t\t Show this help message and exit")
+    print("    -h,--help: \t Show this help message and exit")
     # print("    -a: \t\t Automatically create a firewall rule to allow access to monkeyACL HTTP API")
     print("\n")
     print("Required parameter:")
-    print("    --auth=AUTH: \t API authentication")
-    print("    --port=PORT: \t API HTTP port")
+    print("    --cert=PATH_TO_CERT_FILE: \t Path of the SSL certificate file")
+    print("    --key=PATH_TO_KEY_FILE: \t Path to the SSL private key file")
+    print("    --auth=AUTH: \t\t API authentication")
+    print("    --port=PORT: \t\t API HTTP port")
+    print("    --url=URL: \t\t\t API URL")
     print("\n")
     print("Notes:")
     print("    For your server security, The length of the --auth parameter must be greater than 16, and it must contain uppercase letters, lowercase letters, numbers")
+    print("    If you do not have a valid SSL certificate, you can run the following command to generate one:")
+    print("    Command: openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes")
     print("\n")
     print("Example:")
-    print('    python3 monkeyACL.py --auth="1*r^(5_N1rrbKo6e" --port=8080')
+    print("    python3 monkeyACL.py --auth='1*r^(5_N1rrbKo6e' --port=8080 --url='myapi' --cert=cert.pem --key=key.pem")
     print("\n\n")
 
 
@@ -341,6 +358,26 @@ def main():
         print('[i] Example: python3 monkeyACL.py --auth="fr#yrQ(7rsM8v)ra"')
         return
 
+    if 'port' not in opts.keys():
+        print('[!] You must to specify the -port parameter for API HTTP port.')
+        print('[i] Example: python3 monkeyACL.py --port=8080')
+        return
+
+    if 'url' not in opts.keys():
+        print('[!] You must to specify the -url parameter for API url.')
+        print('[i] Example: python3 monkeyACL.py --url=myapi')
+        return
+
+    if 'cert' not in opts.keys():
+        print('[!] You must to specify the -cert parameter for the SSL certificate file.')
+        print('[i] Example: python3 monkeyACL.py --cert=cert.pem')
+        return
+
+    if 'key' not in opts.keys():
+        print('[!] You must to specify the -cert parameter for the SSL private key file.')
+        print('[i] Example: python3 monkeyACL.py --key=key.pem')
+        return
+
     auth = opts["auth"]
 
     if not tool.check_password(auth):
@@ -371,17 +408,28 @@ def main():
         print('[i] Example: python3 monkeyACL.py --port=8080')
         print("more information: https://github.com/Scorcsoft/monkeyACL")
 
+    OPTIONS['url'] = opts["url"]
+
     firewall = Centos()
 
 
     try:
-        server = MonkeyACLServer(('', port), MonkeyACLHandler, firewall)
         recycle = threading.Thread(target=acl_recycle, args=(firewall,), daemon=True)
+
+        server = MonkeyACLServer(('', port), MonkeyACLHandler, firewall)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certfile=opts['cert'], keyfile=opts['key'])
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+
         print(ascii_logo)
         print('Github: https://github.com/Scorcsoft/monkeyACL')
         print("")
         recycle.start()
-        print(f"[i] MonkeyACL is running at: 0.0.0.0:{port}")
+        print(f"[i] MonkeyACL is running at: https://0.0.0.0:{port}/{opts['url']}")
+        print(f"[i] If you cannot access the Monkey ACL API service, please run the following command:")
+        print(f"sudo firewall-cmd --zone=public --add-port={opts['port']}/tcp --permanent")
+        print(f"sudo firewall-cmd --reload")
+
         server.serve_forever()
     except KeyboardInterrupt:
         print("[i] User quit.")

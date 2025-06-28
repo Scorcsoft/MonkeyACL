@@ -44,38 +44,53 @@ git clone https://github.com/Scorcsoft/MonkeyACL.git
 cd MonkeyACL
 ```
 
-### 2️⃣ 启动服务  
+### 2️⃣ 准备 SSL 证书  
+Monkey ACL的 API 服务要求一个 .pem 格式的 SSL 证书，以便启用 HTTPS 连接。你可以购买一个商用证书、从 Let's encrypt 免费签发一个证书。
+
+也可以使用以下命令来自己签发一个证书：
+
+```bash
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes
+```
+
+这将在当前目录生成一个 cert.pem 和 key.pem ，然后在 Monkey ACL 使用它。这个证书的有效期是 365 天。
+
+### 3️⃣ 启动服务  
 > 当前版本支持 **CentOS 7**，其他系统版本后续支持。
 
 ```bash
-sudo python3 monkeyACL-centos7.py --auth=<your-key> --port=<api-port>
+sudo python3 monkeyACL-centos7.py --auth=<your-key> --port=<api-port> --url=<api-url> --cert=<path_to_cert_file> --key=<path_to_key_file>
 ```
 > 📝 **root 权限必需**：防火墙规则管理需系统管理员权限。
 
-| 参数 | 说明 |
-|-------|-------|
-| `--auth` | API 访问密钥，API 请求需携带此密钥 |
-| `--port` | API 服务监听端口，请确保安全组和防火墙已放通此端口 |
+| 参数    | 说明                          |
+|-------|-----------------------------|
+| --auth | API 访问密钥，API 请求需携带此密钥       |
+| --port | API 服务监听端口，请确保安全组和防火墙已放通此端口 |
+| --url | API 服务 URL，建议使用随机字符串，避免被扫描到 |
+| --cert | SSL 证书文件路径，需要 pem 格式        |
+| --key | SSL 秘钥文件路径，需要 pem 格式        |
 
 启动成功示例：
 ```text
+[root@localhost monkeyACL]# python3 monkeyACL-centos7.py --auth='Geh8uw' --port=3389 --url='vefhuwbyuvftyuvwegfyugvy' --cert=cert.pem --key=key.pem
 
-                        _                       _____ _
-                       | |                /\   / ____| |
-  _ __ ___   ___  _ __ | | _____ _   _   /  \ | |    | |
- | '_ ` _ \ / _ \| '_ \| |/ / _ \ | | | / /\ \| |    | |
- | | | | | | (_) | | | |   <  __/ |_| |/ ____ \ |____| |____
+                        _                       _____ _      
+                       | |                /\   / ____| |     
+  _ __ ___   ___  _ __ | | _____ _   _   /  \ | |    | |     
+ | '_ ` _ \ / _ \| '_ \| |/ / _ \ | | | / /\ \| |    | |     
+ | | | | | | (_) | | | |   <  __/ |_| |/ ____ \ |____| |____ 
  |_| |_| |_|\___/|_| |_|_|\_\___|\___ /_/    \_\_____|______|
-                                  __/ |
-                                 |___/
+                                  __/ |                      
+                                 |___/                       
 
 A lightweight, secure tool for dynamic firewall authorization
 Designed for temporary access control and on-demand port opening via API automation.
 
 Github: https://github.com/Scorcsoft/monkeyACL
 
+[i] MonkeyACL is running at: https://0.0.0.0:3389/vefhuwbyuvftyuvwegfyugvy
 [i] Automatically detect network connections and clean up unused rules.
-[i] MonkeyACL is running at: 0.0.0.0:4400
 
 ```
 
@@ -85,7 +100,7 @@ Github: https://github.com/Scorcsoft/monkeyACL
 
 使用你用来连接服务器的设备访问以下URL：
 ```bash
-curl "http://<server-ip>:<api-port>/scorcsoft/monkeyACL?port=<需要放通的端口>&protocol=<需要放通的协议>&auth=<your-key>"
+curl -X POST -k -d '{"auth": "<your_auth>","port": 8080, "protocol": "tcp"}' "https://chengdu.proxy.scorcsoft.com:4400/<your_api_url>"
 ```
 
 成功响应：
