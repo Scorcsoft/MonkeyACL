@@ -23,11 +23,12 @@ class MonkeyACLServer(HTTPServer):
 
 
 class MonkeyACLHandler(BaseHTTPRequestHandler):
+    protocol_version = 'HTTP/1.1'
     def do_POST(self):
         if not self.path.startswith(f"/{OPTIONS['url']}"):
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Illegal URI address： [{self.path}] ")
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain; charset=utf-8')
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
             self.end_headers()
             self.wfile.write(b'')
             return
@@ -41,10 +42,10 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
         auth = json_data['auth']
         if auth != OPTIONS['auth']:
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Rejected api Call: Illegal user auth: [{auth}], set auth: [{OPTIONS['auth']}]")
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain; charset=utf-8')
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
             self.end_headers()
-            self.wfile.write(b'auth failed')
+            self.wfile.write("auth failed\n\n".encode("utf-8"))
             return
 
         if 'port' not in json_data.keys():
@@ -54,18 +55,34 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
         try:
             port = int(p)
         except:
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
             message = {"success": False, "message": f"{p} is not a valid port"}
-            self.wfile.write(json.dumps(message).encode('utf-8'))
+
+            body = json.dumps(message).encode('utf-8')
+            body += "\n\n".encode("utf-8")
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
             return
         if port < 0 or port > 65535:
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
             message = {"success": False, "message": f"{p} is not a valid port"}
-            self.wfile.write(json.dumps(message).encode('utf-8'))
+
+            body = json.dumps(message).encode('utf-8')
+            body += "\n\n".encode("utf-8")
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
             return
 
         if 'protocol' not in json_data.keys():
@@ -75,11 +92,19 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
         p = json_data['protocol']
         protocol = p.lower()
         if protocol != "tcp" and protocol != "udp":
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
             message = {"success": False, "message": f"{p} is not a valid protocol"}
-            self.wfile.write(json.dumps(message).encode('utf-8'))
+
+            body = json.dumps(message).encode('utf-8')
+            body += "\n\n".encode("utf-8")
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
             return
 
         ip = self.client_address[0]
@@ -87,16 +112,22 @@ class MonkeyACLHandler(BaseHTTPRequestHandler):
         res = self.server.firewall.check_firewalld_rule_exists(ip=ip, port=port, protocol=protocol)
         if res:
             message = {'success': False, 'message': "The rule already exists, there is no need to create it again."}
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json; charset=utf-8')
+            body = json.dumps(message).encode('utf-8')
+            body += "\n\n".encode("utf-8")
+            self.send_response_only(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
             self.end_headers()
-            self.wfile.write(json.dumps(message).encode('utf-8'))
+            self.wfile.write(body)
             return
         res = self.server.firewall.add_firewalld_rule(ip=ip, port=port, protocol=protocol)
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json; charset=utf-8')
+        body = json.dumps(res).encode('utf-8')
+        body += "\n\n".encode("utf-8")
+        self.send_response_only(200)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
         self.end_headers()
-        self.wfile.write(json.dumps(res).encode('utf-8'))
+        self.wfile.write(body)
 
 
 class Tool:
